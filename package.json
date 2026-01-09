@@ -1,0 +1,38 @@
+{
+  "name": "chord-data",
+  "version": "1.0.0",
+  "description": "Chord parse form chord-db",
+  "keywords": [
+    "guitar",
+    "chords",
+    "music",
+    "parser",
+    "tonal"
+  ],
+  "repository": "https://github.com/viiiprock/chord-data.git",
+  "author": "viiiprock@gmail.com",
+  "license": "MIT",
+  "private": false,
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc && node dist/main.js",
+    "parse": "tsx src/main.ts",
+    "export": "tsx scripts/export.ts",
+    "clean": "rm -rf dist",
+    "generate": "pnpm clean && pnpm parse"
+  },
+  "dependencies": {
+    "@tonaljs/chord": "^4.8.5",
+    "@tonaljs/note": "^4.8.5",
+    "@tonaljs/tonal": "^4.8.5",
+    "tonal": "^6.4.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@types/node": "^20.0.0",
+    "tsx": "^3.12.0",
+    "typescript": "^5.0.0"
+  },
+  "type": "module"
+}
