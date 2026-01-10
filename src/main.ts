@@ -23,9 +23,9 @@ async function main() {
             generatedAt: new Date().toISOString(),
             version: "1.0.0",
             totalChords: Object.keys(chords).length,
-            keys: [...new Set(Object.keys(chords))],
             dataSource: "chord-db.json",
         },
+        keys: [...new Set(Object.keys(chords))],
         chords,
     };
 
@@ -42,7 +42,7 @@ async function main() {
     const fileSize = Math.round(JSON.stringify(output).length / 1024);
 
     console.log(`✅ Successfully parsed ${chords.length} chords`);
-    console.log(`📊 Unique keys: ${output.meta.keys.length}`);
+    console.log(`📊 Unique keys: ${output.keys.length}`);
     console.log(`📁 Output: dist/chords.json (${fileSize}KB)`);
     console.log(`⏱️  Time: ${Math.round(endTime - startTime)}ms\n`);
 }

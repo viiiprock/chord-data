@@ -67,25 +67,31 @@ export class ChordParser {
         const chordsMap: Record<string, Record<string, GuitarChord>> = {};
 
         for (const [key, chordList] of Object.entries(this.database.chords)) {
-            if (!chordsMap[key]) {
-                chordsMap[key] = {};
+            // Convert key format: Csharp -> C#, Fsharp -> F#
+            const normalizedKey = this.normalizeKey(key);
+
+            if (!chordsMap[normalizedKey]) {
+                chordsMap[normalizedKey] = {};
             }
 
             for (const rawChord of chordList) {
                 try {
-                    const parsedChord = this.parseChord(key, rawChord);
+                    const parsedChord = this.parseChord(normalizedKey, rawChord);
                     if (parsedChord) {
-                        // Normalize suffix as key (remove special characters)
                         const suffixKey = rawChord.suffix || "major";
-                        chordsMap[key][suffixKey] = parsedChord;
+                        chordsMap[normalizedKey][suffixKey] = parsedChord;
                     }
                 } catch (error) {
-                    console.warn(`Failed to parse ${key} ${rawChord.suffix}:`, error);
+                    console.warn(`Failed to parse ${normalizedKey} ${rawChord.suffix}:`, error);
                 }
             }
         }
 
         return chordsMap;
+    }
+
+    private normalizeKey(key: string): string {
+        return key.replace(/sharp/gi, "#").replace(/flat/gi, "b");
     }
 
     parseChord(key: string, rawChord: RawChord): GuitarChord | null {
@@ -161,14 +167,7 @@ export class ChordParser {
     ): GuitarFingering {
         const { baseFret, frets, fingers, midi, capo } = position;
 
-        // Convert relative frets to absolute frets
-        const absoluteFrets = frets.map((fret) => {
-            if (fret === -1) return -1; // muted string
-            if (fret === 0) return 0; // open string
-            return baseFret + fret - 1; // convert to absolute position
-        });
-
-        const mutedStrings = absoluteFrets
+        const mutedStrings = frets
             .map((fret, idx) => (fret === -1 ? idx : -1))
             .filter((idx) => idx !== -1)
             .map((idx) => 6 - idx);
@@ -189,7 +188,7 @@ export class ChordParser {
         return {
             id: `${rootNote}-${suffix}-${baseFret}`,
             name,
-            frets: absoluteFrets,
+            frets,
             fingers,
             baseFret,
             mutedStrings,
@@ -203,24 +202,25 @@ export class ChordParser {
     }
 
     private parseBarre(position: RawPosition): BarreInfo | undefined {
-        const { barres, baseFret } = position;
+        const { barres, frets } = position;
         if (!barres || barres.length === 0) return undefined;
 
-        // barres[0] is relative to baseFret
-        const relativeFret = barres[0];
-        const absoluteFret = baseFret + relativeFret - 1;
-        let minString = 6;
-        let maxString = 1;
+        const barreFret = barres[0];
 
-        position.frets.forEach((fret, idx) => {
-            if (fret === relativeFret) {
-                const stringNum = 6 - idx;
-                minString = Math.min(minString, stringNum);
-                maxString = Math.max(maxString, stringNum);
+        const barreStrings: number[] = [];
+        frets.forEach((fret, idx) => {
+            if (fret === barreFret) {
+                barreStrings.push(6 - idx);
             }
         });
 
-        return { fromString: minString, toString: maxString, fret: absoluteFret };
+        if (barreStrings.length === 0) return undefined;
+
+        return {
+            fromString: Math.max(...barreStrings),
+            toString: Math.min(...barreStrings),
+            fret: barreFret,
+        };
     }
 
     private calculateIntervals(notes: string[], rootNote: string): string[] {
