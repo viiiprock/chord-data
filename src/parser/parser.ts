@@ -1,4 +1,3 @@
-import type { Chord as ChordType } from "@tonaljs/chord";
 import { Chord } from "@tonaljs/tonal";
 import { Interval, Note } from "tonal";
 
@@ -107,8 +106,8 @@ export class ChordParser {
 
         const chordId = this.generateChordId(key, suffix);
         const quality = this.determineQuality(suffix);
-        const fingerings = positions.map((pos) =>
-            this.parseFingering(pos, suffix, chordInfo.notes[0]),
+        const fingerings = positions.map((pos, idx) =>
+            this.parseFingering(idx, pos, suffix, chordInfo.notes[0]),
         );
         const difficulty = this.calculateChordDifficulty(fingerings);
         const tags = this.generateTags(suffix, fingerings);
@@ -161,6 +160,7 @@ export class ChordParser {
     }
 
     private parseFingering(
+        index: number, // fingering index
         position: RawPosition,
         suffix: string,
         rootNote: string,
@@ -176,8 +176,7 @@ export class ChordParser {
 
         const notes = midi
             .map((midi) => {
-                const note = Note.fromMidi(midi);
-                return note ? note.replace(/[0-9]/g, "") : "";
+                return Note.fromMidi(midi);
             })
             .filter((n) => n);
 
@@ -186,7 +185,7 @@ export class ChordParser {
         const difficulty = this.calculateFingeringDifficulty(position, barre);
 
         return {
-            id: `${rootNote}-${suffix}-${baseFret}`,
+            id: `${rootNote}_${suffix}_${baseFret}_${index + 1}`,
             name,
             frets,
             fingers,
@@ -264,8 +263,10 @@ export class ChordParser {
     }
 
     private generateFingeringName(position: RawPosition, barre?: BarreInfo): string {
-        const isOpenPosition = position.baseFret === 1 && position.frets.some((f) => f === 0);
-        const hasOpenStrings = position.frets.includes(0);
+        const { baseFret, frets } = position;
+
+        const isOpenPosition = baseFret === 1 && frets.some((f) => f === 0);
+        const hasOpenStrings = frets.includes(0);
 
         if (isOpenPosition) {
             return "Open Position";
@@ -273,16 +274,16 @@ export class ChordParser {
 
         if (barre) {
             if (hasOpenStrings) {
-                return `Open - ${this.getOrdinal(barre.fret)} fret`;
+                return `Open - ${this.getOrdinal(baseFret)} fret`;
             }
-            return `Barre - ${this.getOrdinal(barre.fret)} fret`;
+            return `Barre - ${this.getOrdinal(baseFret)} fret`;
         }
 
         if (hasOpenStrings) {
-            return `Open - ${this.getOrdinal(position.baseFret)} fret`;
+            return `Open - ${this.getOrdinal(baseFret)} fret`;
         }
 
-        return `${this.getOrdinal(position.baseFret)} fret`;
+        return `${this.getOrdinal(baseFret)} fret`;
     }
 
     private getOrdinal(n: number): string {

@@ -58,7 +58,6 @@ export interface GuitarChord
 export interface GuitarFingering {
     id: string;
     name: string;
-
     // Fret data
     frets: number[]; // [-1, 0, 2, 2, 1, 0]
     fingers: number[]; // [-1, 0, 2, 3, 1, 0]
@@ -66,12 +65,10 @@ export interface GuitarFingering {
     mutedStrings: number[];
     barre?: BarreInfo;
     capo?: boolean;
-
     // Music data
     midi: number[]; // MIDI notes numbers [60, 64, 67]
     notes: string[]; // Note names ['C4', 'E4', 'G4']
     intervals: string[]; // ['1P', '3M', '5P']
-
     // Metadata
     difficulty: number;
 }
